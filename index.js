@@ -19,9 +19,48 @@ app.get("/", function (req, res) {
 });
 
 
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+// ----------- AUXILIARY FUNCTION ---------- //
+// source: https://stackoverflow.com/a/44198641
+function isValidDate(date) {
+  return date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
+}
+
+// --------- API ENDPOINT /api/ ------- //
+app.get("/api/", (req, res) => {
+  res.json({
+    unix : Date.now(),
+    utc : new Date(Date.now()).toUTCString()
+  })
+});
+
+// --------- API ENDPOINT /api/:date ------- //
+app.get("/api/:date", (req, res, next) => {
+  const d = req.params.date,
+        isDate = isValidDate(new Date(d)),
+        isNumber = !isNaN(Number(d));
+
+  if (isDate) {
+    const date = new Date(d);
+    req.unix = Number(date);
+    req.utc = date.toUTCString();
+  }
+  else if (isNumber){
+    const number = Number(d);
+    req.unix = number;
+    req.utc = new Date(number).toUTCString();
+  }
+  else
+    req.error = "Invalid Date";
+  
+  next();
+}, (req, res) => {
+  if(req.error !== undefined)
+    res.json({ error: req.error });
+  else
+    res.json({
+      unix : req.unix,
+      utc : req.utc
+    });
 });
 
 
